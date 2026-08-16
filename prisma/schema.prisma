@@ -14,11 +14,12 @@ enum MemberRole {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
   name          String
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
 
   ownedWorkspaces   Workspace[]        @relation("WorkspaceOwner")
   memberships       WorkspaceMember[]
@@ -31,11 +32,12 @@ model User {
 }
 
 model Workspace {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   name       String
-  ownerId    String?  @map("owner_id")
-  owner      User?    @relation("WorkspaceOwner", fields: [ownerId], references: [id])
-  createdAt  DateTime @default(now()) @map("created_at")
+  ownerId    String?   @map("owner_id")
+  owner      User?     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  createdAt  DateTime  @default(now()) @map("created_at")
+  deletedAt  DateTime? @map("deleted_at")
 
   members      WorkspaceMember[]
   boards       Board[]
@@ -48,6 +50,7 @@ model WorkspaceMember {
   workspaceId String     @map("workspace_id")
   userId      String     @map("user_id")
   role        MemberRole @default(member)
+  deletedAt   DateTime?  @map("deleted_at")
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -57,10 +60,11 @@ model WorkspaceMember {
 }
 
 model Board {
-  id          String   @id @default(uuid())
-  workspaceId String   @map("workspace_id")
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
   name        String
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   lists     List[]
@@ -69,10 +73,11 @@ model Board {
 }
 
 model List {
-  id       String @id @default(uuid())
-  boardId  String @map("board_id")
-  name     String
-  position Float
+  id        String    @id @default(uuid())
+  boardId   String    @map("board_id")
+  name      String
+  position  Float
+  deletedAt DateTime? @map("deleted_at")
 
   board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   tasks Task[]
@@ -89,6 +94,7 @@ model Task {
   dueDate      DateTime? @map("due_date") @db.Date
   position     Float
   createdAt    DateTime  @default(now()) @map("created_at")
+  deletedAt    DateTime? @map("deleted_at")
 
   list        List         @relation(fields: [listId], references: [id], onDelete: Cascade)
   assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
@@ -100,11 +106,12 @@ model Task {
 }
 
 model Comment {
-  id        String   @id @default(uuid())
-  taskId    String   @map("task_id")
-  userId    String?  @map("user_id")
+  id        String    @id @default(uuid())
+  taskId    String    @map("task_id")
+  userId    String?   @map("user_id")
   body      String
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
 
   task Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id])
@@ -113,11 +120,12 @@ model Comment {
 }
 
 model Attachment {
-  id         String   @id @default(uuid())
-  taskId     String   @map("task_id")
+  id         String    @id @default(uuid())
+  taskId     String    @map("task_id")
   url        String
-  uploadedBy String?  @map("uploaded_by")
-  createdAt  DateTime @default(now()) @map("created_at")
+  uploadedBy String?   @map("uploaded_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  deletedAt  DateTime? @map("deleted_at")
 
   task     Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
   uploader User? @relation(fields: [uploadedBy], references: [id])
@@ -126,13 +134,14 @@ model Attachment {
 }
 
 model ActivityLog {
-  id          String   @id @default(uuid())
-  workspaceId String   @map("workspace_id")
-  actorId     String?  @map("actor_id")
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  actorId     String?   @map("actor_id")
   action      String
-  entityType  String   @map("entity_type")
-  entityId    String   @map("entity_id")
-  createdAt   DateTime @default(now()) @map("created_at")
+  entityType  String    @map("entity_type")
+  entityId    String    @map("entity_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   actor     User?     @relation(fields: [actorId], references: [id])

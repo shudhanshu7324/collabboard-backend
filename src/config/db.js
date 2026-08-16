@@ -1,3 +1,5 @@
+//  Just for reference, not used in the project we have used Prisma for database connection
+
 import pg from 'pg';
 import dotenv from 'dotenv';
 
