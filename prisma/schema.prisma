@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MemberRole {
+  owner
+  admin
+  member
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  ownedWorkspaces   Workspace[]        @relation("WorkspaceOwner")
+  memberships       WorkspaceMember[]
+  assignedTasks     Task[]             @relation("TaskAssignee")
+  comments          Comment[]
+  attachments       Attachment[]
+  activityLogs      ActivityLog[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id         String   @id @default(uuid())
+  name       String
+  ownerId    String?  @map("owner_id")
+  owner      User?    @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  members      WorkspaceMember[]
+  boards       Board[]
+  activityLogs ActivityLog[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  workspaceId String     @map("workspace_id")
+  userId      String     @map("user_id")
+  role        MemberRole @default(member)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Board {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lists     List[]
+
+  @@map("boards")
+}
+
+model List {
+  id       String @id @default(uuid())
+  boardId  String @map("board_id")
+  name     String
+  position Float
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("lists")
+}
+
+model Task {
+  id           String    @id @default(uuid())
+  listId       String    @map("list_id")
+  title        String
+  description  String?
+  assigneeId   String?   @map("assignee_id")
+  dueDate      DateTime? @map("due_date") @db.Date
+  position     Float
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  list        List         @relation(fields: [listId], references: [id], onDelete: Cascade)
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  comments    Comment[]
+  attachments Attachment[]
+
+  @@index([listId])
+  @@map("tasks")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  userId    String?  @map("user_id")
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  taskId     String   @map("task_id")
+  url        String
+  uploadedBy String?  @map("uploaded_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  task     Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader User? @relation(fields: [uploadedBy], references: [id])
+
+  @@map("attachments")
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  actorId     String?  @map("actor_id")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor     User?     @relation(fields: [actorId], references: [id])
+
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@map("activity_log")
+}
