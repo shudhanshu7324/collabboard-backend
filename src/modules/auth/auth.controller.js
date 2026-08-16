@@ -1,4 +1,4 @@
-import { signup, login, refreshAccessToken } from './auth.service.js';
+import { signUp, login, refreshAccessToken } from './auth.service.js';
 
 export async function handleSignup(req, res) {
   try {
@@ -8,7 +8,7 @@ export async function handleSignup(req, res) {
       return res.status(400).json({ error: 'email, password, and name are required' });
     }
 
-    const result = await signup({ email, password, name });
+    const result = await signUp({ email, password, name });
     res.status(201).json(result);
   } catch (err) {
     res.status(err.statusCode || 500).json({ error: err.message || 'Something went wrong' });

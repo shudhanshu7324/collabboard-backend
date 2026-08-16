@@ -3,9 +3,9 @@ import bcrypt from 'bcrypt';
 import prisma from '../../config/prisma.js';
 
 const saltRounds = 10;
-const jwtSecret = process.env.JWT_SECRET;
-const jwtExpiration = '15m';
-const refreshTokenExpiration = '7d';
+const JWT_SECRET = process.env.JWT_SECRET;
+const ACCESS_TOKEN_EXPIRES_IN = '15m';
+const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
 export async function signUp({email, password,name}) {
 
@@ -17,7 +17,7 @@ export async function signUp({email, password,name}) {
     }
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    const user = await prisma.user.create({data: {email, password: passwordHash, name}});
+    const user = await prisma.user.create({data: {email, passwordHash, name}});
 
     const accessToken = signAccessToken(user);
     const refreshToken = signRefreshToken(user);
@@ -93,6 +93,7 @@ export async function refreshAccessToken(refreshToken) {
    
   // Never send passwordHash back to the client, ever
   function sanitizeUser(user) {
+    console.log(user);
     const { passwordHash, ...safeUser } = user;
     return safeUser;
   }
