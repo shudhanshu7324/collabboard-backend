@@ -12,7 +12,7 @@ export async function signUp({email, password,name}) {
     const existingUser = await prisma.user.findUnique({where: {email}});
     if (existingUser) {
         const err = new Error('User already exists with this email');
-        err.status = 409;
+        err.statusCode = 409;
         throw err;
     }
     const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -93,7 +93,6 @@ export async function refreshAccessToken(refreshToken) {
    
   // Never send passwordHash back to the client, ever
   function sanitizeUser(user) {
-    console.log(user);
     const { passwordHash, ...safeUser } = user;
     return safeUser;
   }
